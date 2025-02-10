@@ -41,16 +41,13 @@ class _CarouselPageState extends State<CarouselPage> {
   }
 
   void _connectWebSocket() {
-    // Connect to the server.
-    channel = IOWebSocketChannel.connect('ws://localhost:8080');
+    channel = IOWebSocketChannel.connect('ws://192.168.68.242:8080');
     print('Attempting to connect to WebSocket...');
 
-    // Listen for incoming messages (assumed to be image data).
     channel!.stream.listen(
       (message) {
         print('Image received');
         _updateImage(message);
-        // Send acknowledgment back to the server.
         try {
           channel!.sink.add("ACK");
           print('Acknowledgment sent.');
@@ -68,8 +65,7 @@ class _CarouselPageState extends State<CarouselPage> {
       },
     );
 
-    // Start the carousel: send a "REQUEST_IMAGE" every 5 seconds.
-    carouselTimer = Timer.periodic(Duration(seconds: 5), (timer) {
+    carouselTimer = Timer.periodic(Duration(seconds: 10), (timer) {
       if (channel != null) {
         print('Requesting new image...');
         channel!.sink.add("REQUEST_IMAGE");
@@ -85,10 +81,14 @@ class _CarouselPageState extends State<CarouselPage> {
   }
 
   void _updateImage(String newData) {
-    // Update the state with the new image data.
-    setState(() {
-      imageDataString = newData;
-    });
+    final decoded = _decodeImageData(newData);
+    if (decoded != null) {
+      setState(() {
+        imageDataString = newData;
+      });
+    } else {
+      print("Decoding failed, keeping last image");
+    }
   }
 
   @override
@@ -98,12 +98,10 @@ class _CarouselPageState extends State<CarouselPage> {
     super.dispose();
   }
 
-  /// Utility: If the string is a data URL, extract and decode the Base64 part.
   Uint8List? _decodeImageData(String? dataString) {
     if (dataString == null) return null;
     if (dataString.startsWith("data:")) {
       try {
-        // Format: data:[<mime type>][;charset=<charset>][;base64],<encoded data>
         final commaIndex = dataString.indexOf(',');
         if (commaIndex == -1) return null;
         final base64Str = dataString.substring(commaIndex + 1);
@@ -136,8 +134,7 @@ class _CarouselPageState extends State<CarouselPage> {
   }
 
   Widget _buildImageWidget() {
-    // If we haven't received any image yet, show a placeholder.
-    if (imageDataString == null) {
+    Widget buildPlaceholder() {
       return Container(
         key: ValueKey("placeholder"),
         width: double.infinity,
@@ -148,12 +145,10 @@ class _CarouselPageState extends State<CarouselPage> {
           'Awaiting Image...',
           style: TextStyle(color: Colors.white, fontSize: 20),
         ),
-      );
+     );
     }
 
-    final bytes = _decodeImageData(imageDataString);
-    if (bytes == null) {
-      // If decoding failed, show an error message.
+    Widget buildError() {
       return Container(
         key: ValueKey("error"),
         alignment: Alignment.center,
@@ -162,12 +157,21 @@ class _CarouselPageState extends State<CarouselPage> {
           style: TextStyle(color: Colors.red),
         ),
       );
-    } else {
-      return Image.memory(
-        bytes,
-        key: ValueKey(imageDataString),
-        fit: BoxFit.contain,
-      );
     }
+
+    if (imageDataString == null) {
+      return buildPlaceholder();
+    }
+    
+    final bytes = _decodeImageData(imageDataString);
+    if (bytes == null) {
+      return buildError();
+    }
+    
+    return Image.memory(
+      bytes,
+      key: ValueKey(imageDataString), // Unique key for each image
+      fit: BoxFit.contain,
+    );
   }
 }
