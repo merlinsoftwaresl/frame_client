@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:frame_client/image_display.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frame_client/qr_connection.dart';
 
 void main() {
-  runApp(FrameClientApp());
+  runApp(
+    const ProviderScope(
+      child: FrameClientApp(),
+    ),
+  );
 }
 
 class FrameClientApp extends StatelessWidget {
@@ -13,7 +17,7 @@ class FrameClientApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Frame Client',
-      home: ImageDisplay(socketDirection:"192.168.68.242:8080"),
+      home: QrConnection(),
     );
   }
 }
