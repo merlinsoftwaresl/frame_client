@@ -7,7 +7,8 @@ import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/status.dart' as status;
 
 class ImageDisplay extends StatefulWidget {
-  const ImageDisplay({super.key});
+  final String socketDirection;
+  const ImageDisplay({super.key, required this.socketDirection});
 
   @override
   ImageDisplayState createState() => ImageDisplayState();
@@ -129,7 +130,7 @@ class ImageDisplayState extends State<ImageDisplay> {
           'Awaiting Image...',
           style: TextStyle(color: Colors.white, fontSize: 20),
         ),
-     );
+      );
     }
 
     Widget buildError() {
@@ -146,12 +147,12 @@ class ImageDisplayState extends State<ImageDisplay> {
     if (imageDataString == null) {
       return buildPlaceholder();
     }
-    
+
     final bytes = _decodeImageData(imageDataString);
     if (bytes == null) {
       return buildError();
     }
-    
+
     return Image.memory(
       bytes,
       key: ValueKey(imageDataString), // Unique key for each image
