@@ -26,8 +26,8 @@ class ImageDisplayState extends State<ImageDisplay> {
   }
 
   void _connectWebSocket() {
-    channel = IOWebSocketChannel.connect('ws://192.168.68.242:8080');
-    print('Attempting to connect to WebSocket...');
+    channel = IOWebSocketChannel.connect('ws://${widget.socketDirection}');
+    print('Attempting to connect to WebSocket at ws://${widget.socketDirection}...');
 
     channel!.stream.listen(
       (message) {
