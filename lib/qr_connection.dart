@@ -8,6 +8,7 @@ import 'package:shelf/shelf_io.dart' as io;
 
 import 'image_display.dart';
 import 'providers/connection_provider.dart';
+import 'providers/http_server_provider.dart';
 
 class QrConnection extends ConsumerStatefulWidget {
   const QrConnection({super.key});
@@ -21,7 +22,8 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
   void initState() {
     super.initState();
     _getLocalIpAddress();
-    _startHttpServer();
+    // Initialize the server
+    ref.read(configServerProvider);
   }
 
   Future<void> _getLocalIpAddress() async {
@@ -35,50 +37,24 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
     }
   }
 
-  Future<void> _startHttpServer() async {
-    final handler = const Pipeline()
-        .addMiddleware(logRequests())
-        .addHandler(_handleRequest);
-
-    try {
-      final server = await io.serve(handler, InternetAddress.anyIPv4, 8888);
-      ref.read(connectionStateProvider.notifier).setServer(server);
-      final ip = ref.read(connectionStateProvider).ipAddress;
-      print('HTTP server running on http://$ip:8888');
-    } catch (e) {
-      print('Error starting HTTP server: $e');
-    }
-  }
-
-  Future<Response> _handleRequest(Request request) async {
-    print('Received request: ${request.method} ${request.url.path}');
-
-    final body = await request.readAsString();
-    print('Received configuration: $body');
-
-    // Navigate to ImageDisplay with the received socket direction
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ImageDisplay(socketDirection: body),
-        ),
-      );
-    }
-
-    return Response.ok('Configuration received');
-  }
-
-  @override
-  void dispose() {
-    // Don't close the server on dispose since we need it in ImageDisplay
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Watch both providers
     final connectionState = ref.watch(connectionStateProvider);
     final connectionString = '${connectionState.ipAddress}:${connectionState.port}';
+
+    // Listen to socket direction changes to navigate
+    ref.listen(connectionStateProvider.select((state) => state.socketDirection),
+        (previous, next) {
+      if (next != null && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ImageDisplay(),
+          ),
+        );
+      }
+    });
     
     return Scaffold(
       body: Center(

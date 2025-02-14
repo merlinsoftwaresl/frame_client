@@ -9,27 +9,31 @@ class ConnectionStateModel {
   final String ipAddress;
   final HttpServer? server;
   final int port;
+  final String? socketDirection;
 
   ConnectionStateModel({
     required this.ipAddress,
     this.server,
     this.port = 8888,
+    this.socketDirection,
   });
 
   ConnectionStateModel copyWith({
     String? ipAddress,
     HttpServer? server,
     int? port,
+    String? socketDirection,
   }) {
     return ConnectionStateModel(
       ipAddress: ipAddress ?? this.ipAddress,
       server: server ?? this.server,
       port: port ?? this.port,
+      socketDirection: socketDirection ?? this.socketDirection,
     );
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class ConnectionState extends _$ConnectionState {
   @override
   ConnectionStateModel build() {
@@ -47,5 +51,9 @@ class ConnectionState extends _$ConnectionState {
   Future<void> closeServer() async {
     await state.server?.close();
     state = state.copyWith(server: null);
+  }
+
+  void updateSocketDirection(String direction) {
+    state = state.copyWith(socketDirection: direction);
   }
 } 
