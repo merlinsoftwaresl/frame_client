@@ -21,6 +21,7 @@ class ImageDisplayState extends ConsumerState<ImageDisplay> {
   Timer? carouselTimer;
   String? imageDataString;
   String? currentSocketDirection;  // Add this to track the current connection
+  bool isReconnecting = false;  // Add a flag to track reconnection status
 
   @override
   void initState() {
@@ -85,16 +86,21 @@ class ImageDisplayState extends ConsumerState<ImageDisplay> {
   }
 
   void _reconnect() {
+    if (isReconnecting) return;  // Prevent multiple reconnection attempts
+    isReconnecting = true;
+
     carouselTimer?.cancel();
     channel?.sink.close();
-    
-    // Only attempt reconnection if we still have a valid socket direction
+
     if (ref.read(connectionStateProvider).socketDirection != null) {
       Future.delayed(Duration(seconds: 2), () {
         if (mounted) {
           _connectWebSocket();
+          isReconnecting = false;
         }
       });
+    } else {
+      isReconnecting = false;
     }
   }
 
