@@ -20,8 +20,9 @@ class ImageDisplayState extends ConsumerState<ImageDisplay> {
   IOWebSocketChannel? channel;
   Timer? carouselTimer;
   String? imageDataString;
-  String? currentSocketDirection;  // Add this to track the current connection
-  bool isReconnecting = false;  // Add a flag to track reconnection status
+  String? currentSocketDirection;
+  bool isReconnecting = false;
+  int currentDelay = 5;
 
   @override
   void initState() {
@@ -30,14 +31,52 @@ class ImageDisplayState extends ConsumerState<ImageDisplay> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final newSocketDirection = ref.read(connectionStateProvider).socketDirection;
+  Widget build(BuildContext context) {
+    // Watch the connection state for changes
+    final connectionState = ref.watch(connectionStateProvider);
     
-    // If we have a new socket direction and it's different from the current one
-    if (newSocketDirection != null && newSocketDirection != currentSocketDirection) {
-      _reconnect();
+    // React to delay changes
+    if (currentDelay != connectionState.delaySeconds) {
+      // Use Future.microtask to avoid calling setState during build
+      Future.microtask(() => _updateCarouselTimer());
     }
+    
+    // React to socket direction changes
+    if (connectionState.socketDirection != null && 
+        connectionState.socketDirection != currentSocketDirection) {
+      Future.microtask(() => _reconnect());
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: AnimatedSwitcher(
+          duration: Duration(milliseconds: 500),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          child: _buildImageWidget(),
+        ),
+      ),
+    );
+  }
+
+  void _updateCarouselTimer() {
+    carouselTimer?.cancel();
+    final delaySeconds = ref.read(connectionStateProvider).delaySeconds;
+    if (currentDelay != delaySeconds) {
+      print('Updating carousel timer to $delaySeconds seconds');
+    }
+    currentDelay = delaySeconds;
+    carouselTimer = Timer.periodic(Duration(seconds: delaySeconds), (timer) {
+      if (channel != null) {
+        print('Requesting new image... (delay: $delaySeconds seconds)');
+        channel!.sink.add("REQUEST_IMAGE");
+      }
+    });
   }
 
   void _connectWebSocket() {
@@ -51,6 +90,7 @@ class ImageDisplayState extends ConsumerState<ImageDisplay> {
       final wsUrl = 'ws://$socketDirection';
       print('Attempting to connect to WebSocket at $wsUrl');
       channel = IOWebSocketChannel.connect(wsUrl);
+      currentSocketDirection = socketDirection;  // Update the current socket direction
 
       channel!.stream.listen(
         (message) {
@@ -73,12 +113,7 @@ class ImageDisplayState extends ConsumerState<ImageDisplay> {
         },
       );
 
-      carouselTimer = Timer.periodic(Duration(seconds: 10), (timer) {
-        if (channel != null) {
-          print('Requesting new image...');
-          channel!.sink.add("REQUEST_IMAGE");
-        }
-      });
+      _updateCarouselTimer();
     } catch (e) {
       print('Error connecting to WebSocket: $e');
       _reconnect();
@@ -86,11 +121,12 @@ class ImageDisplayState extends ConsumerState<ImageDisplay> {
   }
 
   void _reconnect() {
-    if (isReconnecting) return;  // Prevent multiple reconnection attempts
+    if (isReconnecting) return;
     isReconnecting = true;
 
     carouselTimer?.cancel();
     channel?.sink.close();
+    currentSocketDirection = null;  // Reset the current socket direction
 
     if (ref.read(connectionStateProvider).socketDirection != null) {
       Future.delayed(Duration(seconds: 2), () {
@@ -136,25 +172,6 @@ class ImageDisplayState extends ConsumerState<ImageDisplay> {
       }
     }
     return null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: AnimatedSwitcher(
-          duration: Duration(milliseconds: 500),
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
-          },
-          child: _buildImageWidget(),
-        ),
-      ),
-    );
   }
 
   Widget _buildImageWidget() {

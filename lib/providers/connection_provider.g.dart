@@ -6,7 +6,7 @@ part of 'connection_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$connectionStateHash() => r'5d39f3964787f98fd62e56407b0b4a3a4d572185';
+String _$connectionStateHash() => r'08634557abfa5b849b1c4f045e85a24dd871dc85';
 
 /// See also [ConnectionState].
 @ProviderFor(ConnectionState)

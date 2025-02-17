@@ -7,28 +7,28 @@ part 'connection_provider.g.dart';
 
 class ConnectionStateModel {
   final String ipAddress;
-  final HttpServer? server;
   final int port;
   final String? socketDirection;
+  final int delaySeconds;
 
-  ConnectionStateModel({
-    required this.ipAddress,
-    this.server,
+  const ConnectionStateModel({
+    this.ipAddress = '',
     this.port = 8888,
     this.socketDirection,
+    this.delaySeconds = 5,
   });
 
   ConnectionStateModel copyWith({
     String? ipAddress,
-    HttpServer? server,
     int? port,
     String? socketDirection,
+    int? delaySeconds,
   }) {
     return ConnectionStateModel(
       ipAddress: ipAddress ?? this.ipAddress,
-      server: server ?? this.server,
       port: port ?? this.port,
       socketDirection: socketDirection ?? this.socketDirection,
+      delaySeconds: delaySeconds ?? this.delaySeconds,
     );
   }
 }
@@ -37,23 +37,18 @@ class ConnectionStateModel {
 class ConnectionState extends _$ConnectionState {
   @override
   ConnectionStateModel build() {
-    return ConnectionStateModel(ipAddress: 'Loading...');
+    return const ConnectionStateModel();
   }
 
   void updateIpAddress(String ip) {
     state = state.copyWith(ipAddress: ip);
   }
 
-  void setServer(HttpServer server) {
-    state = state.copyWith(server: server);
-  }
-
-  Future<void> closeServer() async {
-    await state.server?.close();
-    state = state.copyWith(server: null);
-  }
-
   void updateSocketDirection(String direction) {
     state = state.copyWith(socketDirection: direction);
+  }
+
+  void updateDelay(int seconds) {
+    state = state.copyWith(delaySeconds: seconds);
   }
 } 

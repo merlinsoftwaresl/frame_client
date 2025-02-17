@@ -39,23 +39,31 @@ class ConfigServer extends _$ConfigServer {
   Future<Response> _handleRequest(Request request) async {
     print('Received request: ${request.method} ${request.url.path}');
 
-    if (request.method == 'POST' && request.url.path == 'configure') {
+    if (request.method == 'POST') {
       try {
         final body = await request.readAsString();
-        print('Received configuration: $body');
         
-        // Validate and format the socket direction
-        if (body.isNotEmpty) {
-          final socketDirection = body.trim();
-          print('Setting socket direction to: $socketDirection');
-          
-          // Update the socket direction using the connection provider
-          ref.read(connectionStateProvider.notifier).updateSocketDirection(socketDirection);
-          
-          return Response.ok('Configuration received: $socketDirection');
-        } else {
-          print('Empty configuration received');
-          return Response.badRequest(body: 'Empty configuration');
+        switch (request.url.path) {
+          case 'configure_address':
+            if (body.isNotEmpty) {
+              final socketDirection = body.trim();
+              print('Setting socket direction to: $socketDirection');
+              ref.read(connectionStateProvider.notifier).updateSocketDirection(socketDirection);
+              return Response.ok('Configuration received: $socketDirection');
+            }
+            return Response.badRequest(body: 'Empty configuration');
+            
+          case 'configure_delay':
+            if (body.isNotEmpty) {
+              final delay = int.tryParse(body.trim());
+              if (delay != null && delay > 0) {
+                print('Setting delay to: $delay seconds');
+                ref.read(connectionStateProvider.notifier).updateDelay(delay);
+                return Response.ok('Delay configured: $delay seconds');
+              }
+              return Response.badRequest(body: 'Invalid delay value');
+            }
+            return Response.badRequest(body: 'Empty delay configuration');
         }
       } catch (e) {
         print('Error handling configuration request: $e');
