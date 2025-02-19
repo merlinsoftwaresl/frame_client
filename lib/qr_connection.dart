@@ -5,7 +5,7 @@ import 'package:network_info_plus/network_info_plus.dart';
 
 import 'image_display.dart';
 import 'providers/connection_provider.dart';
-import 'providers/http_server_provider.dart';
+import 'providers/http_config_provider.dart';
 
 class QrConnection extends ConsumerStatefulWidget {
   const QrConnection({super.key});
@@ -41,7 +41,7 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
     final connectionString = '${connectionState.ipAddress}:${connectionState.port}';
 
     // Listen to socket direction changes to navigate
-    ref.listen(connectionStateProvider.select((state) => state.socketDirection),
+    ref.listen(connectionStateProvider.select((state) => state.serverAddress),
         (previous, next) {
       if (next != null && mounted) {
         Navigator.pushReplacement(

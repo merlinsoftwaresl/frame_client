@@ -1,12 +1,12 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'http_server_provider.dart';
+part of 'config_server_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$configServerHash() => r'c059917ee2beb78b933c36fb02db09d41030bc61';
+String _$configServerHash() => r'3bc446ab90a668a71847b8b14f697728ac894e2f';
 
 /// See also [ConfigServer].
 @ProviderFor(ConfigServer)

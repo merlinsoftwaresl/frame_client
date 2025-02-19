@@ -5,7 +5,7 @@ import 'package:shelf/shelf_io.dart' as io;
 
 import 'connection_provider.dart';
 
-part 'http_server_provider.g.dart';
+part 'http_config_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 class ConfigServer extends _$ConfigServer {
@@ -48,7 +48,7 @@ class ConfigServer extends _$ConfigServer {
             if (body.isNotEmpty) {
               final socketDirection = body.trim();
               print('Setting socket direction to: $socketDirection');
-              ref.read(connectionStateProvider.notifier).updateSocketDirection(socketDirection);
+              ref.read(connectionStateProvider.notifier).updateServerAddress(socketDirection);
               return Response.ok('Configuration received: $socketDirection');
             }
             return Response.badRequest(body: 'Empty configuration');

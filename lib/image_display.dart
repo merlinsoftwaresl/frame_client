@@ -28,10 +28,10 @@ class ImageDisplayState extends ConsumerState<ImageDisplay> {
 
   void _initializeImageFetching() {
     final connectionState = ref.read(connectionStateProvider);
-    if (connectionState.socketDirection != null) {
-      serverUrl = 'http://${connectionState.socketDirection}';
+    if (connectionState.serverAddress != null) {
+      serverUrl = 'http://${connectionState.serverAddress}';
       _updateCarouselTimer();
-      _fetchNextImage(); // Fetch first image immediately
+      _fetchNextImage();
     }
   }
 
@@ -75,10 +75,10 @@ class ImageDisplayState extends ConsumerState<ImageDisplay> {
     }
     
     // React to server URL changes
-    if (connectionState.socketDirection != null && 
-        'http://${connectionState.socketDirection}' != serverUrl) {
+    if (connectionState.serverAddress != null && 
+        'http://${connectionState.serverAddress}' != serverUrl) {
       Future.microtask(() {
-        serverUrl = 'http://${connectionState.socketDirection}';
+        serverUrl = 'http://${connectionState.serverAddress}';
         _fetchNextImage();
       });
     }
