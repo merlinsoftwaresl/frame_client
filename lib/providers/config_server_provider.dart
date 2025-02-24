@@ -57,10 +57,4 @@ class ConfigServer extends _$ConfigServer {
 
     return Response(404, body: 'Not found');
   }
-
-  @override
-  void dispose() {
-    _server?.close();
-    super.dispose();
-  }
 } 

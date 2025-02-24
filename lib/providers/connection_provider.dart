@@ -1,8 +1,4 @@
-import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shelf/shelf.dart';
-import 'package:shelf/shelf_io.dart' as io;
-
 part 'connection_provider.g.dart';
 
 class ConnectionStateModel {

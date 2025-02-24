@@ -153,4 +153,4 @@ app.*.symbols
 
 # Cursor AI
 .cursorrules 
-instructions.md
+#instructions.md
