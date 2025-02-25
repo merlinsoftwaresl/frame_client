@@ -66,47 +66,100 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
       }
     });
     
+    // Get screen size for responsive layout
+    final screenSize = MediaQuery.of(context).size;
+    final isLandscape = screenSize.width > screenSize.height;
+    
+    // Adjust QR size based on orientation
+    final qrSize = isLandscape 
+        ? screenSize.height * 0.4  // 40% of height in landscape
+        : screenSize.width * 0.6;  // 60% of width in portrait
+    
+    // Calculate responsive text sizes - smaller in landscape
+    final multiplier = isLandscape ? 0.8 : 1.0;
+    final headingSize = screenSize.width * 0.045 * multiplier;
+    final bodySize = screenSize.width * 0.04 * multiplier;
+    final smallSize = screenSize.width * 0.035 * multiplier;
+    
+    // Create the content widgets
+    final qrSection = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Scan QR code to connect',
+          style: TextStyle(fontSize: headingSize, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+        QrImageView(
+          data: connectionString,
+          version: QrVersions.auto,
+          size: qrSize,
+        ),
+      ],
+    );
+    
+    final infoSection = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Or discover via network',
+          style: TextStyle(fontSize: headingSize, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Frame ID: ${connectionState.frameId}',
+          style: TextStyle(fontSize: bodySize),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'IP Address: ${connectionState.ipAddress}',
+          style: TextStyle(fontSize: bodySize),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Port: ${connectionState.port}',
+          style: TextStyle(fontSize: bodySize),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'Discovery service is running',
+          style: TextStyle(fontSize: smallSize, color: Colors.green),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+    
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Scan QR code to connect',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: isLandscape
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(child: qrSection),
+                      const SizedBox(width: 40),
+                      Expanded(child: infoSection),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      qrSection,
+                      const SizedBox(height: 40),
+                      infoSection,
+                    ],
+                  ),
             ),
-            const SizedBox(height: 20),
-            QrImageView(
-              data: connectionString,
-              version: QrVersions.auto,
-              size: 200.0,
-            ),
-            const SizedBox(height: 40),
-            const Text(
-              'Or discover via network',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Frame ID: ${connectionState.frameId}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'IP Address: ${connectionState.ipAddress}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Port: ${connectionState.port}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Discovery service is running',
-              style: TextStyle(fontSize: 14, color: Colors.green),
-            ),
-          ],
+          ),
         ),
       ),
     );
