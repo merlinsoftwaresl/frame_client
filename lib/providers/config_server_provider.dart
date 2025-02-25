@@ -5,6 +5,7 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 
 import 'connection_provider.dart';
+import '../services/discovery_service.dart';
 
 part 'config_server_provider.g.dart';
 
@@ -26,6 +27,15 @@ class ConfigServer extends _$ConfigServer {
     try {
       _server = await io.serve(handler, '0.0.0.0', 8888);
       print('Server running on port ${_server!.port}');
+      
+      // Update the port in the connection state
+      ref.read(connectionStateProvider.notifier).updatePort(_server!.port);
+      
+      // Start broadcasting with the correct port if we have an IP
+      final ip = ref.read(connectionStateProvider).ipAddress;
+      if (ip != 'Unable to fetch IP' && !ip.contains('Error')) {
+        await ref.read(discoveryServiceProvider).startBroadcast(ip, _server!.port);
+      }
     } catch (e) {
       print('Failed to start server: $e');
     }

@@ -6,6 +6,7 @@ import 'package:network_info_plus/network_info_plus.dart';
 import 'image_display.dart';
 import 'providers/connection_provider.dart';
 import 'providers/http_config_provider.dart';
+import 'services/discovery_service.dart';
 
 class QrConnection extends ConsumerStatefulWidget {
   const QrConnection({super.key});
@@ -28,6 +29,12 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
     try {
       String? ip = await networkInfo.getWifiIP();
       ref.read(connectionStateProvider.notifier).updateIpAddress(ip ?? 'Unable to fetch IP');
+      
+      // Start broadcasting the service once we have the IP
+      if (ip != null) {
+        final port = ref.read(connectionStateProvider).port;
+        await ref.read(discoveryServiceProvider).startBroadcast(ip, port);
+      }
     } catch (e) {
       print('Error fetching local IP: $e');
       ref.read(connectionStateProvider.notifier).updateIpAddress('Error fetching IP');
@@ -64,12 +71,30 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
     
     return Scaffold(
       body: Center(
-        child: QrImageView(
-          data: connectionString,
-          version: QrVersions.auto,
-          size: qrSize,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            QrImageView(
+              data: connectionString,
+              version: QrVersions.auto,
+              size: qrSize,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Scan QR code or find device on network',
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'IP: ${connectionState.ipAddress}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
         ),
       ),
     );
   }
+  
+  static const String _serviceName = 'AI Picture Frame';
 }
