@@ -6,14 +6,12 @@ class ConnectionStateModel {
   final int port;
   final String? serverAddress;
   final int delaySeconds;
-  final String frameId;
 
   const ConnectionStateModel({
     this.ipAddress = '',
     this.port = 8888,
     this.serverAddress,
     this.delaySeconds = 5,
-    this.frameId = 'Unknown',
   });
 
   ConnectionStateModel copyWith({
@@ -21,14 +19,12 @@ class ConnectionStateModel {
     int? port,
     String? serverAddress,
     int? delaySeconds,
-    String? frameId,
   }) {
     return ConnectionStateModel(
       ipAddress: ipAddress ?? this.ipAddress,
       port: port ?? this.port,
       serverAddress: serverAddress ?? this.serverAddress,
       delaySeconds: delaySeconds ?? this.delaySeconds,
-      frameId: frameId ?? this.frameId,
     );
   }
 }
@@ -50,9 +46,5 @@ class ConnectionState extends _$ConnectionState {
 
   void updateDelay(int seconds) {
     state = state.copyWith(delaySeconds: seconds);
-  }
-
-  void updateFrameId(String frameId) {
-    state = state.copyWith(frameId: frameId);
   }
 } 
