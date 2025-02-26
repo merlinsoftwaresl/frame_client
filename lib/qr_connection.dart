@@ -28,16 +28,32 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
     final networkInfo = NetworkInfo();
     try {
       String? ip = await networkInfo.getWifiIP();
-      ref.read(connectionStateProvider.notifier).updateIpAddress(ip ?? 'Unable to fetch IP');
-      
-      // Start broadcasting the service once we have the IP
+      ref
+          .read(connectionStateProvider.notifier)
+          .updateIpAddress(ip ?? 'Unable to fetch IP');
+
+      // Wait for the server to be initialized
+      await ref.read(configServerProvider.future);
+
+      // Add a delay to ensure everything is properly initialized
+      await Future.delayed(const Duration(seconds: 1));
+
       if (ip != null) {
         final port = ref.read(connectionStateProvider).port;
-        await ref.read(discoveryServiceProvider).startBroadcast(ip, port);
+        print('QR Connection - IP: $ip, Port: $port');
+
+        if (port > 0) {
+          await ref
+              .read(discoveryServiceProvider)
+              .stopBroadcast(); // Stop any existing broadcast
+          await ref.read(discoveryServiceProvider).startBroadcast(ip, port);
+        }
       }
     } catch (e) {
       print('Error fetching local IP: $e');
-      ref.read(connectionStateProvider.notifier).updateIpAddress('Error fetching IP');
+      ref
+          .read(connectionStateProvider.notifier)
+          .updateIpAddress('Error fetching IP');
     }
   }
 
@@ -45,7 +61,8 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
   Widget build(BuildContext context) {
     // Watch both providers
     final connectionState = ref.watch(connectionStateProvider);
-    final connectionString = '${connectionState.ipAddress}:${connectionState.port}';
+    final connectionString =
+        '${connectionState.ipAddress}:${connectionState.port}';
 
     // Listen to socket direction changes to navigate
     ref.listen(connectionStateProvider.select((state) => state.serverAddress),
@@ -59,16 +76,15 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
         );
       }
     });
-    
+
     // Get screen size for responsive layout
     final screenSize = MediaQuery.of(context).size;
     final isLandscape = screenSize.width > screenSize.height;
-    
+
     // Adjust QR size based on orientation
-    final qrSize = isLandscape 
-        ? screenSize.height * 0.4
-        : screenSize.width * 0.4;
-    
+    final qrSize =
+        isLandscape ? screenSize.height * 0.4 : screenSize.width * 0.4;
+
     return Scaffold(
       body: Center(
         child: Column(
@@ -87,7 +103,7 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
             ),
             const SizedBox(height: 10),
             Text(
-              'IP: ${connectionState.ipAddress}',
+              connectionString,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
@@ -95,6 +111,4 @@ class _QrConnectionState extends ConsumerState<QrConnection> {
       ),
     );
   }
-  
-  static const String _serviceName = 'AI Picture Frame';
 }

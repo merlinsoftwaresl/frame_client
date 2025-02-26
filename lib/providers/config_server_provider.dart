@@ -27,14 +27,12 @@ class ConfigServer extends _$ConfigServer {
     try {
       _server = await io.serve(handler, '0.0.0.0', 8888);
       print('Server running on port ${_server!.port}');
-      
-      // Update the port in the connection state
-      ref.read(connectionStateProvider.notifier).updatePort(_server!.port);
-      
-      // Start broadcasting with the correct port if we have an IP
+
       final ip = ref.read(connectionStateProvider).ipAddress;
-      if (ip != 'Unable to fetch IP' && !ip.contains('Error')) {
-        await ref.read(discoveryServiceProvider).startBroadcast(ip, _server!.port);
+      final port = ref.read(connectionStateProvider).port;
+
+      if (ip != 'Unable to fetch IP' && !ip.contains('Error') && port > 0) {
+        await ref.read(discoveryServiceProvider).startBroadcast(ip, port);
       }
     } catch (e) {
       print('Failed to start server: $e');
@@ -46,11 +44,13 @@ class ConfigServer extends _$ConfigServer {
       try {
         final payload = await request.readAsString();
         final data = jsonDecode(payload);
-        
+
         // Update server address
         if (data['server_address'] != null) {
           final serverAddress = data['server_address'] as String;
-          ref.read(connectionStateProvider.notifier).updateServerAddress(serverAddress);
+          ref
+              .read(connectionStateProvider.notifier)
+              .updateServerAddress(serverAddress);
         }
 
         // Update delay
@@ -67,4 +67,4 @@ class ConfigServer extends _$ConfigServer {
 
     return Response(404, body: 'Not found');
   }
-} 
+}

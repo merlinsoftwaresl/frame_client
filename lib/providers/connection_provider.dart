@@ -47,4 +47,8 @@ class ConnectionState extends _$ConnectionState {
   void updateDelay(int seconds) {
     state = state.copyWith(delaySeconds: seconds);
   }
-} 
+
+  void updatePort(int port) {
+    state = state.copyWith(port: port);
+  }
+}
